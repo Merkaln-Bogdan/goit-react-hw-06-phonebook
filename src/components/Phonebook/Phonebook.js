@@ -2,10 +2,8 @@ import React from "react";
 import style from "./PhoneBook.module.css";
 import PhonebookEditor from "./PhonebookEditor";
 import Filter from "../Filter/Filter";
-import AlertWindow from "../AlertWindow/AlertWindow";
 import PhonebookListItem from "../PhonebookListItem/PhoneBookListItem";
 import slideTransition from "../../stylesTransition/PhonebookListSlide.module.css";
-import alertSlideTransition from "../../stylesTransition/AlertTransition.module.css";
 import PhoneFilter from "../../stylesTransition/PhoneFilter.module.css";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
@@ -13,47 +11,45 @@ import taskPhonebook from "../redux/TaskPhonebook";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 
 function Phonebook({ contacts, onRemovePersonData }) {
+  localStorage.setItem("contacts", JSON.stringify(contacts));
+
+  const getContacts = JSON.parse(localStorage.getItem("contacts"));
   return (
     <>
       <div className={style.phoneList}>
         <h2>Контакты</h2>
+
+        <PhonebookEditor />
+
         <CSSTransition
-          in={false}
+          in={getContacts.length > 1}
           timeout={250}
-          classNames={alertSlideTransition}
+          classNames={PhoneFilter}
           unmountOnExit
         >
-          <AlertWindow />
+          <Filter />
         </CSSTransition>
-        <PhonebookEditor />
-        {contacts.length > 0 ? (
-          <CSSTransition
-            in={contacts.length > 1}
-            timeout={250}
-            classNames={PhoneFilter}
-            unmountOnExit
-          >
-            <Filter />
-          </CSSTransition>
-        ) : (
-          <h2>No contacts</h2>
-        )}
-        <TransitionGroup component="ul" className={style.contactList}>
-          {contacts.map((contact) => (
-            <CSSTransition
-              key={contact.id}
-              timeout={300}
-              classNames={slideTransition}
-            >
-              <PhonebookListItem
+
+        {getContacts.length > 0 ? (
+          <TransitionGroup component="ul" className={style.contactList}>
+            {getContacts.map((contact) => (
+              <CSSTransition
                 key={contact.id}
-                name={contact.name}
-                number={contact.number}
-                onRemovePersonData={() => onRemovePersonData(contact.id)}
-              />
-            </CSSTransition>
-          ))}
-        </TransitionGroup>
+                timeout={300}
+                classNames={slideTransition}
+              >
+                <PhonebookListItem
+                  key={contact.id}
+                  name={contact.name}
+                  number={contact.number}
+                  onRemovePersonData={() => onRemovePersonData(contact.id)}
+                />
+              </CSSTransition>
+            ))}
+          </TransitionGroup>
+        ) : (
+          <h2>Нет контактов</h2>
+        )}
       </div>
     </>
   );
@@ -64,7 +60,6 @@ const MapStateToProps = (state) => {
     contact.name.toLowerCase().includes(filter.toLowerCase())
   );
   return {
-    state,
     contacts: visibleContacts,
   };
 };
